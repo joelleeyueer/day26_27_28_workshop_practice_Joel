@@ -62,6 +62,9 @@ public class GameRepository {
         Criteria criteria = Criteria.where("gid").is(gid);
         Query query = Query.query(criteria);
         String getOneGameDetails = mongoTemplate.findOne(query, String.class, "game");
+        if (getOneGameDetails == null) {
+            return null;
+        }
         JsonObject gameDetailJson = Json.createReader(new StringReader(getOneGameDetails)).readObject();
         return gameDetailJson;
 
