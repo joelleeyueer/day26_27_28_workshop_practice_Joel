@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.json.JsonObject;
+import nus.iss.day26_27_workshop_practice_Joel.models.Comment;
 import nus.iss.day26_27_workshop_practice_Joel.repositories.GameRepository;
 
 @Service
@@ -22,6 +23,10 @@ public class GameService {
 
     public JsonObject getOneGameDetails(int gid){
         return gameRepository.getOneGameDetail(gid);
+    }
+
+    public JsonObject insertComment(Comment comment){
+        return gameRepository.insertComment(comment);
     }
     
     

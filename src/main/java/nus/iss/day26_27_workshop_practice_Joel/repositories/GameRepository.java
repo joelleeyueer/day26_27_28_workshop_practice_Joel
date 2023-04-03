@@ -3,18 +3,26 @@ package nus.iss.day26_27_workshop_practice_Joel.repositories;
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
+
+import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
+
+import com.mongodb.client.result.InsertOneResult;
+import com.mongodb.client.result.UpdateResult;
 
 import jakarta.json.Json;
 import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
+import nus.iss.day26_27_workshop_practice_Joel.models.Comment;
 import nus.iss.day26_27_workshop_practice_Joel.models.Game;
 
 @Repository
@@ -68,9 +76,65 @@ public class GameRepository {
         return gameDetailJson;
 
     }
+    // {
+    //     "_id" : ObjectId("6423b69fdcece521dc1419ec"),
+    //     "c_id" : "091910b8",
+    //     "user" : "PAYDIRT",
+    //     "rating" : NumberInt(6),
+    //     "c_text" : "A detailed tactical game on air and air to ground combat missions in the The Vietnam War/Second Indochina War.  Worth a look if the topic interests you.  The 2nd edition bookcase version is a cleaned up and better version.",
+    //     "gid" : NumberInt(6228)
+    // }
+    public JsonObject insertComment(Comment incomingComment){
+        Criteria criteria = Criteria.where("gid").is(incomingComment.getGid());
+        Query query = Query.query(criteria);
+
+        Criteria criteria2 = Criteria.where("gid").is(incomingComment.getGid());
+        Query query2 = Query.query(criteria2);
+        query2.fields().include("name").exclude("_id");
+        
+
+        String theGame = null;
+        try {
+            theGame = mongoTemplate.findOne(query2, Game.class, "game").getName();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+        
+        if (theGame == null) {
+            return null;
+        }
+
+        Document commentDocForJson = new Document()
+        .append("user", incomingComment.getUser())
+        .append("rating", incomingComment.getRating())
+        .append("comment", incomingComment.getCText())
+        .append("ID", incomingComment.getGid())
+        .append("posted", LocalDateTime.now().toLocalDate().toString())
+        .append("name", theGame);
+
+        Document commentDocForMongo = new Document()
+        .append("c_id", incomingComment.getCId())
+        .append("user", incomingComment.getUser())
+        .append("rating", incomingComment.getRating())
+        .append("c_text", incomingComment.getCText())
+        .append("gid", incomingComment.getGid());
+
+        
+
+        Document result = mongoTemplate.insert(commentDocForMongo, "comment");
+
+        System.out.printf("inserted: %s\n", result.toString());
+
+        String jsonString = commentDocForJson.toJson();
+        JsonObject commentJson = Json.createReader(new StringReader(jsonString)).readObject();
+
+        return commentJson;
+    }
+    
 
 
-
+    //helper
     private JsonObject generateJsonObject(int limit, int offset, List<Game> gamesList) {
         JsonArrayBuilder gamesArrayBuilder = Json.createArrayBuilder();
         for (Game game : gamesList) {
@@ -94,6 +158,8 @@ public class GameRepository {
         JsonObject gamesObject = gamesObjectBuilder.build();
         return gamesObject;
     }
+
+    
 
 
 
