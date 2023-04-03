@@ -104,5 +104,17 @@ public class GameRestController {
 
         return ResponseEntity.ok(incomingUpdateReview.toString());
     }
+
+    @GetMapping(path="/review/{cid}" , produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getReview(@PathVariable String cid){
+            
+            JsonObject incomingUpdateReview = gameService.getLatestReview(cid);
+    
+            if (incomingUpdateReview == null){
+                return ResponseEntity.notFound().build();
+            }
+    
+            return ResponseEntity.ok(incomingUpdateReview.toString());
+    }
     
 }

@@ -173,10 +173,80 @@ public class GameRepository {
         return updateDocForJson;
 
     }
+
+    public JsonObject getLatestReview(String incomingCid){
+        Criteria criteria = Criteria.where("c_id").is(incomingCid);
+        Query query = Query.query(criteria);
+
+        Document theReview = null;
+        try {
+            theReview = mongoTemplate.findOne(query, Document.class, "comment");
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+
+        if (theReview == null) {
+            return null;
+        }
+
+        // System.out.println("Printing gid " + theReview.get("gid")); for testing only
+
+        Criteria criteriaGame = Criteria.where("gid").is(theReview.get("gid"));
+        Query queryGame = Query.query(criteriaGame);
+        queryGame.fields().include("name").exclude("_id");
+
+        String theGame = null;
+        try {
+            theGame = mongoTemplate.findOne(queryGame, Game.class, "game").getName();
+
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+
+        if (theGame == null) {
+            return null;
+        }
+
+        
+        // System.out.println("Printing game name " + theGame); for testing
+
+        String timeNow = LocalDateTime.now().toLocalDate().toString();
+
+        Boolean hasEdited = theReview.containsKey("edited");
+        Document latestEdit = null;
+        if (hasEdited){
+            List<Document> editedList = (List<Document>) theReview.get("edited");
+            latestEdit = editedList.get(editedList.size() - 1);
+        }
+
+        try {
+        // System.out.println("in try updateDocForJson"); for testing
+        JsonObject updateDocForJson = Json.createObjectBuilder()
+        .add("user", theReview.getString("user"))
+        .add("rating", hasEdited ? latestEdit.getInteger("rating").toString() : theReview.getInteger("rating").toString())
+        .add("comment", hasEdited ? latestEdit.getString("comment") : theReview.getString("c_text"))
+        .add("ID", theReview.getInteger("gid").toString())
+        .add("posted", hasEdited ? latestEdit.getString("posted") : "")
+        .add("name", theGame)
+        .add("edited", Boolean.toString(hasEdited))
+        .add("timestamp", timeNow)
+        .build();
+
+        // System.out.println("Printing jsonobject: " + updateDocForJson.toString()); for testing
+
+        return updateDocForJson;
+
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+    }
     
 
 
-    //helper
+    //helper method
     private JsonObject generateJsonObject(int limit, int offset, List<Game> gamesList) {
         JsonArrayBuilder gamesArrayBuilder = Json.createArrayBuilder();
         for (Game game : gamesList) {

@@ -34,6 +34,10 @@ public class GameService {
         return gameRepository.updateReview(updateReview);
     }
 
+    public JsonObject getLatestReview(String cid){
+        return gameRepository.getLatestReview(cid);
+    }
+
     
     
 }
