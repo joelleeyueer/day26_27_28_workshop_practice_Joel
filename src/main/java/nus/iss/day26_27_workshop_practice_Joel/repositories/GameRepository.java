@@ -3,7 +3,6 @@ package nus.iss.day26_27_workshop_practice_Joel.repositories;
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,7 +13,6 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
-import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.client.result.UpdateResult;
 
 import jakarta.json.Json;
@@ -24,6 +22,7 @@ import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
 import nus.iss.day26_27_workshop_practice_Joel.models.Comment;
 import nus.iss.day26_27_workshop_practice_Joel.models.Game;
+import nus.iss.day26_27_workshop_practice_Joel.models.UpdateReview;
 
 @Repository
 public class GameRepository {
@@ -85,22 +84,22 @@ public class GameRepository {
     //     "gid" : NumberInt(6228)
     // }
     public JsonObject insertComment(Comment incomingComment){
+        // Criteria criteria = Criteria.where("gid").is(incomingComment.getGid());
+        // Query query = Query.query(criteria);
+
         Criteria criteria = Criteria.where("gid").is(incomingComment.getGid());
         Query query = Query.query(criteria);
-
-        Criteria criteria2 = Criteria.where("gid").is(incomingComment.getGid());
-        Query query2 = Query.query(criteria2);
-        query2.fields().include("name").exclude("_id");
+        query.fields().include("name").exclude("_id");
         
 
         String theGame = null;
         try {
-            theGame = mongoTemplate.findOne(query2, Game.class, "game").getName();
+            theGame = mongoTemplate.findOne(query, Game.class, "game").getName();
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
-        
+
         if (theGame == null) {
             return null;
         }
@@ -130,6 +129,49 @@ public class GameRepository {
         JsonObject commentJson = Json.createReader(new StringReader(jsonString)).readObject();
 
         return commentJson;
+    }
+
+    public JsonObject updateReview(UpdateReview incomingUpdate){
+
+        Criteria criteria = Criteria.where("c_id").is(incomingUpdate.getCId());
+        Query query = Query.query(criteria);
+
+        String theCid = null;
+        try {
+            theCid = mongoTemplate.findOne(query, String.class, "comment").toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        if (theCid == null) {
+            return null;
+        }
+
+        String timeNow = LocalDateTime.now().toLocalDate().toString();
+
+        JsonObject updateDocForJson = Json.createObjectBuilder()
+        .add("comment", incomingUpdate.getComment())
+        .add("rating", incomingUpdate.getRating())
+        .add("posted", timeNow)
+        .build();
+
+        Document updateDocForMongo = new Document()
+        .append("comment", incomingUpdate.getComment())
+        .append("rating", incomingUpdate.getRating())
+        .append("posted", timeNow);
+
+        Update updateOps = new Update()
+            .push("edited",updateDocForMongo);
+
+        UpdateResult result = mongoTemplate.updateFirst(query, updateOps, Document.class, "comment");
+
+        System.out.printf("matched: %d\n", result.getMatchedCount());
+        System.out.printf("modified: %d\n", result.getModifiedCount());
+        System.out.printf("ack: %b\n", result.wasAcknowledged());
+
+        return updateDocForJson;
+
     }
     
 
