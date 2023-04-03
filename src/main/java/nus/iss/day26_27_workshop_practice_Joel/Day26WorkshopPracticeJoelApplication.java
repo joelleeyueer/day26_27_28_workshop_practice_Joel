@@ -1,4 +1,4 @@
-package nus.iss.day26_workshop_practice_Joel;
+package nus.iss.day26_27_workshop_practice_Joel;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

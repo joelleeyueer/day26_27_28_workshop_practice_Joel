@@ -1,11 +1,8 @@
-package nus.iss.day26_workshop_practice_Joel.repositories;
+package nus.iss.day26_27_workshop_practice_Joel.repositories;
 
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.util.List;
-import org.bson.Document;
-
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -18,13 +15,15 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
-import nus.iss.day26_workshop_practice_Joel.models.Game;
+import nus.iss.day26_27_workshop_practice_Joel.models.Game;
 
 @Repository
 public class GameRepository {
 
     @Autowired
     private MongoTemplate mongoTemplate;
+
+//    db.game.find({}, { gid: 1, name: 1}).limit(20).skip(0).sort({ gid: 1 })
 
     public JsonObject getGamesByName(int limit, int offset){
 

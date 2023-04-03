@@ -1,4 +1,4 @@
-package nus.iss.day26_workshop_practice_Joel.restcontrollers;
+package nus.iss.day26_27_workshop_practice_Joel.restcontrollers;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.json.JsonObject;
-import nus.iss.day26_workshop_practice_Joel.services.GameService;
+import nus.iss.day26_27_workshop_practice_Joel.services.GameService;
 
 @RestController
 @RequestMapping("/games")

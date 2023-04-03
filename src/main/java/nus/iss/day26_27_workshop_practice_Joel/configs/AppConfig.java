@@ -1,4 +1,4 @@
-package nus.iss.day26_workshop_practice_Joel.configs;
+package nus.iss.day26_27_workshop_practice_Joel.configs;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
