@@ -1,5 +1,6 @@
 package nus.iss.day26_27_workshop_practice_Joel.repositories;
 
+
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,6 +14,7 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Repository;
 
+import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 
 import jakarta.json.Json;
@@ -242,6 +244,139 @@ public class GameRepository {
             System.out.println(e);
             return null;
         }
+    }
+
+    
+
+    public JsonObject getAllEditsInComment(String incomingCid){
+        Criteria criteria = Criteria.where("c_id").is(incomingCid);
+        Query query = Query.query(criteria);
+
+        Document theReview = null;
+        try {
+            theReview = mongoTemplate.findOne(query, Document.class, "comment");
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+
+        if (theReview == null) {
+            return null;
+        }
+
+        // System.out.println("Printing gid " + theReview.get("gid")); for testing only
+
+        Criteria criteriaGame = Criteria.where("gid").is(theReview.get("gid"));
+        Query queryGame = Query.query(criteriaGame);
+        queryGame.fields().include("name").exclude("_id");
+
+        String theGame = null;
+        try {
+            theGame = mongoTemplate.findOne(queryGame, Game.class, "game").getName();
+
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+
+        if (theGame == null) {
+            return null;
+        }
+
+        
+        // System.out.println("Printing game name " + theGame); for testing
+
+        String timeNow = LocalDateTime.now().toLocalDate().toString();
+
+        Boolean hasEdited = theReview.containsKey("edited");
+        if (!hasEdited){
+            System.out.println("No edits found, returning latest review");
+            return getLatestReview(incomingCid);
+        }
+        System.out.println("Edits found, returning all edits");
+        Document latestEdit = null;
+        String editedString = null;
+        JsonArray editedArray = null;
+        if (hasEdited){
+            List<Document> editedList = (List<Document>) theReview.get("edited");
+            latestEdit = editedList.get(editedList.size() - 1);
+            // editedString = "[";
+            // for (int i = 0; i < editedList.size(); i++) {
+            //     Document editedDoc = editedList.get(i);
+            //     editedString += "{ comment: " + editedDoc.getString("comment") +
+            //                     ", rating: " + editedDoc.getInteger("rating") +
+            //                     ", posted: " + editedDoc.getString("posted") + " }";
+            //     if (i != editedList.size() - 1) {
+            //         editedString += ", ";
+            //     }
+            // }
+            // editedString += "]";
+            JsonArrayBuilder historyArrayBuilder = Json.createArrayBuilder();
+            for (Document currentReview : editedList) {
+            JsonObjectBuilder reviewObjectBuilder = Json.createObjectBuilder();
+            reviewObjectBuilder.add("comment", currentReview.get("comment").toString())
+                        .add("name", currentReview.get("rating").toString())
+                        .add("posted", currentReview.get("posted").toString());
+                        historyArrayBuilder.add(reviewObjectBuilder.build());
+                }
+
+             editedArray = historyArrayBuilder.build();
+        }
+
+        try {
+        // System.out.println("in try updateDocForJson under method getAllEditsInComment");
+        JsonObjectBuilder updateDocForJson = Json.createObjectBuilder()
+        .add("user", theReview.getString("user"))
+        .add("rating", hasEdited ? latestEdit.getInteger("rating").toString() : theReview.getInteger("rating").toString())
+        .add("comment", hasEdited ? latestEdit.getString("comment") : theReview.getString("c_text"))
+        .add("ID", theReview.getInteger("gid").toString())
+        .add("posted", hasEdited ? latestEdit.getString("posted") : "")
+        .add("name", theGame)
+        .add("edited", editedArray)
+        .add("timestamp", timeNow);
+
+        JsonObject updateDocForJsonFinal = updateDocForJson.build();
+
+        // System.out.println("Printing jsonobject: " + updateDocForJson.toString()); for testing
+
+        return updateDocForJsonFinal;
+
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+    }
+
+    //out of scope
+    public JsonObject deleteReview(String incomingCid){
+        Criteria criteria = Criteria.where("c_id").is(incomingCid);
+        Query query = Query.query(criteria);
+
+        String theCid = null;
+        try {
+            theCid = mongoTemplate.findOne(query, String.class, "comment").toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+
+        if (theCid == null) {
+            return null;
+        }
+
+        String timeNow = LocalDateTime.now().toLocalDate().toString();
+
+        JsonObject deleteDocForJson = Json.createObjectBuilder()
+        .add("c_id", incomingCid)
+        .add("timestamp", timeNow)
+        .build();
+
+        DeleteResult result = mongoTemplate.remove(query, Document.class, "comment");
+
+        System.out.printf("deleted: %d\n", result.getDeletedCount());
+        System.out.printf("ack: %b\n", result.wasAcknowledged());
+
+        return deleteDocForJson;
     }
     
 

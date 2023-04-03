@@ -38,6 +38,14 @@ public class GameService {
         return gameRepository.getLatestReview(cid);
     }
 
+    public JsonObject deleteReview(String cid){
+        return gameRepository.deleteReview(cid);
+    }
+
+    public JsonObject getAllEditsInComment(String cid){
+        return gameRepository.getAllEditsInComment(cid);
+    }
+
     
     
 }
