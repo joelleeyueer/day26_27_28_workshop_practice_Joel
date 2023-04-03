@@ -347,7 +347,7 @@ public class GameRepository {
         }
     }
 
-    //out of scope
+    //out of scope --reference only
     public JsonObject deleteReview(String incomingCid){
         Criteria criteria = Criteria.where("c_id").is(incomingCid);
         Query query = Query.query(criteria);
