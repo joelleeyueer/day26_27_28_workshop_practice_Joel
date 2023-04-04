@@ -568,7 +568,7 @@ public class GameRepository {
         for (int i = 0; i < gamesArray.size(); i++) {
             JsonObject currentGame = gamesArray.getJsonObject(i);
             int gid = currentGame.getInt("gid");
-            Document highestRating = getHighestRating(gid, false);
+            Document highestRating = getHighestOrLowestRating(gid, false);
             if (highestRating == null) {
                 continue;
             }
@@ -603,7 +603,7 @@ public class GameRepository {
         for (int i = 0; i < gamesArray.size(); i++) {
             JsonObject currentGame = gamesArray.getJsonObject(i);
             int gid = currentGame.getInt("gid");
-            Document highestRating = getHighestRating(gid, true);
+            Document highestRating = getHighestOrLowestRating(gid, true);
             if (highestRating == null) {
                 continue;
             }
@@ -636,7 +636,7 @@ public class GameRepository {
     //     } },
     //     { $project: { _id: 0, gid: "$_id.gid", user: "$_id.user", comment: "$_id.comment", c_id: "$_id.c_id", highestRating: 1 } }
     //   ])
-    private Document getHighestRating(int gid, Boolean isHighest) {
+    private Document getHighestOrLowestRating(int gid, Boolean isHighest) {
         
         MatchOperation match = Aggregation.match(Criteria.where("gid").is(gid));
         SortOperation sort = null;
