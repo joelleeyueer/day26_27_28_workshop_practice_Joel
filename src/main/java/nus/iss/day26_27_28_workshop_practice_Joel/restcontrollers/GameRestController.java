@@ -156,6 +156,32 @@ public class GameRestController {
             return ResponseEntity.ok(incomingUpdateReview.toString());
     }
 
+    @GetMapping(path="/highest" , produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getHighest(@RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "0") int offset){
+            JsonObject incomingObject = gameService.getAllGamesHighestLowestRating("highest", limit, offset);
+    
+            if (incomingObject == null){
+                return ResponseEntity
+                        .notFound()
+                        .build();
+            }
+        
+            return ResponseEntity.ok(incomingObject.toString());
+    }
+
+    @GetMapping(path="/lowest" , produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getLowest(@RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "0") int offset){
+            JsonObject incomingObject = gameService.getAllGamesHighestLowestRating("lowest", limit, offset);
+    
+            if (incomingObject == null){
+                return ResponseEntity
+                        .notFound()
+                        .build();
+            }
+        
+            return ResponseEntity.ok(incomingObject.toString());
+    }
+
 
     
 }

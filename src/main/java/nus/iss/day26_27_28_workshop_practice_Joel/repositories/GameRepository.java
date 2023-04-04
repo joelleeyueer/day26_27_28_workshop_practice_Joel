@@ -13,9 +13,12 @@ import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.aggregation.AddFieldsOperation;
 import org.springframework.data.mongodb.core.aggregation.Aggregation;
 import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.GroupOperation;
+import org.springframework.data.mongodb.core.aggregation.LimitOperation;
 import org.springframework.data.mongodb.core.aggregation.LookupOperation;
 import org.springframework.data.mongodb.core.aggregation.MatchOperation;
 import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
+import org.springframework.data.mongodb.core.aggregation.SortOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -540,6 +543,129 @@ public class GameRepository {
         }
         return commentIds;
     }
+
+    public JsonObject getAllGamesHighestLowestRating(String rating, int limit, int offset){
+        if (rating.equalsIgnoreCase("highest")) {
+            return getGamesByHighestRating(limit, offset);
+        } else if (rating.equalsIgnoreCase("lowest")) {
+            return getGamesByLowestRating(limit, offset);
+        } else {
+            return null;
+        }
+
+        // JsonObject gamesList = getGamesByName(limit, offset);
+    }
+
+    private JsonObject getGamesByLowestRating(int limit, int offset) {
+        //get the fullgame list
+        //for each game, call getHighestRating
+        //create a jsonobject and push it into a jsonarray
+        //build the jsonobject to return with the jsonarray
+        JsonObject gamesList = getGamesByName(limit, offset);
+        JsonArray gamesArray = gamesList.getJsonArray("games");
+        //{"games":[{"gid":1,"name":"Die Macher","ranking":223},{"gid":2,"name":"Dragonmaster","ranking":3095},
+        JsonArrayBuilder gamesArrayBuilder = Json.createArrayBuilder();
+        for (int i = 0; i < gamesArray.size(); i++) {
+            JsonObject currentGame = gamesArray.getJsonObject(i);
+            int gid = currentGame.getInt("gid");
+            Document highestRating = getHighestRating(gid, false);
+            if (highestRating == null) {
+                continue;
+            }
+            JsonObjectBuilder gameBuilder = Json.createObjectBuilder()
+            .add("_id", currentGame.getInt("gid"))
+            .add("name", currentGame.getString("name"))
+            .add("lowest_rating", highestRating.getInteger("highestRating"))
+            .add("lowest_rating_rating_user", highestRating.getString("user"))
+            .add("lowest_rating_rating_comment", highestRating.getString("comment"))
+            .add("lowest_rating_rating_comment_id", highestRating.getString("c_id"));
+            JsonObject game = gameBuilder.build();
+            gamesArrayBuilder.add(game);
+        }
+        JsonArray gamesArrayWithHighestRating = gamesArrayBuilder.build();
+        JsonObject gamesListWithHighestRating = Json.createObjectBuilder()
+        .add("rating", "lowest")
+        .add("games", gamesArrayWithHighestRating)
+        .add("timestamp", LocalDateTime.now().toString())
+        .build();
+        return gamesListWithHighestRating;
+    }
+
+    private JsonObject getGamesByHighestRating(int limit, int offset) {
+        //get the fullgame list
+        //for each game, call getHighestRating
+        //create a jsonobject and push it into a jsonarray
+        //build the jsonobject to return with the jsonarray
+        JsonObject gamesList = getGamesByName(limit, offset);
+        JsonArray gamesArray = gamesList.getJsonArray("games");
+        //{"games":[{"gid":1,"name":"Die Macher","ranking":223},{"gid":2,"name":"Dragonmaster","ranking":3095},
+        JsonArrayBuilder gamesArrayBuilder = Json.createArrayBuilder();
+        for (int i = 0; i < gamesArray.size(); i++) {
+            JsonObject currentGame = gamesArray.getJsonObject(i);
+            int gid = currentGame.getInt("gid");
+            Document highestRating = getHighestRating(gid, true);
+            if (highestRating == null) {
+                continue;
+            }
+            JsonObjectBuilder gameBuilder = Json.createObjectBuilder()
+            .add("_id", currentGame.getInt("gid"))
+            .add("name", currentGame.getString("name"))
+            .add("highest_rating", highestRating.getInteger("highestRating"))
+            .add("highest_rating_user", highestRating.getString("user"))
+            .add("highest_rating_comment", highestRating.getString("comment"))
+            .add("highest_rating_comment_id", highestRating.getString("c_id"));
+            JsonObject game = gameBuilder.build();
+            gamesArrayBuilder.add(game);
+        }
+        JsonArray gamesArrayWithHighestRating = gamesArrayBuilder.build();
+        JsonObject gamesListWithHighestRating = Json.createObjectBuilder()
+        .add("rating", "highest")
+        .add("games", gamesArrayWithHighestRating)
+        .add("timestamp", LocalDateTime.now().toString())
+        .build();
+        return gamesListWithHighestRating;
+    }
+
+    // db.comment.aggregate([
+    //     { $match: { gid: 999 } },
+    //     { $sort: { rating: -1 } },
+    //     { $limit: 1 },
+    //     { $group: {
+    //       _id: { gid: "$gid", user: "$user", comment: "$c_text", c_id: "$c_id" },
+    //       highestRating: { $first: "$rating" }
+    //     } },
+    //     { $project: { _id: 0, gid: "$_id.gid", user: "$_id.user", comment: "$_id.comment", c_id: "$_id.c_id", highestRating: 1 } }
+    //   ])
+    private Document getHighestRating(int gid, Boolean isHighest) {
+        
+        MatchOperation match = Aggregation.match(Criteria.where("gid").is(gid));
+        SortOperation sort = null;
+        if (isHighest){
+             sort = Aggregation.sort(Sort.Direction.DESC, "rating");
+
+        } else{
+            sort = Aggregation.sort(Sort.Direction.ASC, "rating");
+        }
+        LimitOperation limit = Aggregation.limit(1);
+
+        GroupOperation group = Aggregation.group("gid", "user", "c_text", "c_id")
+                                        .first("rating").as("highestRating");
+        ProjectionOperation project = Aggregation.project()
+                                                .and("gid").as("gid")
+                                                .and("user").as("user")
+                                                .and("c_text").as("comment")
+                                                .and("c_id").as("c_id")
+                                                .and("highestRating").as("highestRating");
+
+        Aggregation pipeline = Aggregation.newAggregation(match, sort, limit, group, project);
+        try {
+            Document result = mongoTemplate.aggregate(pipeline, "comment", Document.class).getUniqueMappedResult();
+            return result;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+    
     
 
     

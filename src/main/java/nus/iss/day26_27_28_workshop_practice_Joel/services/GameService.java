@@ -50,6 +50,10 @@ public class GameService {
         return gameRepository.getGameWithAllReviews(gid);
     }
 
+    public JsonObject getAllGamesHighestLowestRating(String rating, int limit, int offset){
+        return gameRepository.getAllGamesHighestLowestRating(rating, limit, offset);
+    }
+
     
     
 }
