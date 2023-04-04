@@ -46,6 +46,10 @@ public class GameService {
         return gameRepository.getAllEditsInComment(cid);
     }
 
+    public JsonObject getGameWithAllReviews(int gid){
+        return gameRepository.getGameWithAllReviews(gid);
+    }
+
     
     
 }

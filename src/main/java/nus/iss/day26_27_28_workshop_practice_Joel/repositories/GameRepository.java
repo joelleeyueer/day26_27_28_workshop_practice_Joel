@@ -3,12 +3,19 @@ package nus.iss.day26_27_28_workshop_practice_Joel.repositories;
 
 import java.io.StringReader;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.aggregation.AddFieldsOperation;
+import org.springframework.data.mongodb.core.aggregation.Aggregation;
+import org.springframework.data.mongodb.core.aggregation.AggregationResults;
+import org.springframework.data.mongodb.core.aggregation.LookupOperation;
+import org.springframework.data.mongodb.core.aggregation.MatchOperation;
+import org.springframework.data.mongodb.core.aggregation.ProjectionOperation;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
@@ -378,6 +385,140 @@ public class GameRepository {
 
         return deleteDocForJson;
     }
+    // db.game.aggregate([
+    //     { $match: { gid: 99 } },
+    //     {
+    //       $lookup: {
+    //         from: "comment",
+    //         localField: "gid",
+    //         foreignField: "gid",
+    //         as: "comments"
+    //       }
+    //     },
+    //     {
+    //       $addFields: {
+    //         average_rating: { $avg: "$comments.rating" },
+    //         reviews: "$comments.c_id"
+    //       }
+    //     },
+    //     {
+    //       $project: {
+    //         _id: 0,
+    //         gid: 1,
+    //         boardgame_name: "$name",
+    //         year: 1,
+    //         rank: 1,
+    //         average_rating: 1,
+    //         users_rated: 1,
+    //         url: 1,
+    //         image: 1,
+    //         reviews: {
+    //           $map: {
+    //            input: "$comments",
+    //             as: "r",
+    //             in: {
+    //               $concat: ["/review/", "$$r.c_id"]
+    //             }
+    //           }
+    //         },
+    //         timestamp: { $toDate: Date.now() }
+    //       }
+    //     }
+    //   ]);
+    public JsonObject getGameWithAllReviews(int gid){
+
+        Float incomingAverage = getAverageRating(gid);
+        List<String> commentIds = getAllCommentIdsForGid(gid);
+        //turn commentIds into JsonArray
+        JsonArrayBuilder commentIdsArrayBuilder = Json.createArrayBuilder();
+        for (String currentCid : commentIds) {
+            String string = "/games/review/" + currentCid;
+            commentIdsArrayBuilder.add(string);
+        }
+
+        JsonArray commentIdsArray = commentIdsArrayBuilder.build();
+
+        JsonObject gameDetail = getOneGameDetail(gid);
+        System.out.println(gameDetail.toString());
+
+
+        JsonObject averageRating = Json.createObjectBuilder()
+        .add("gid", gameDetail.getInt("gid"))
+        .add("name", gameDetail.getString("name"))
+        .add("year", gameDetail.getInt("year"))
+        .add("rank", gameDetail.getInt("ranking"))
+        .add("average_rating", incomingAverage)
+        .add("users_rated", gameDetail.getInt("users_rated"))
+        .add("url", gameDetail.getString("url"))
+        .add("thumbnail", gameDetail.getString("image"))
+        .add("reviews", commentIdsArray)
+        .build();
+
+        return averageRating;
+        
+        
+        
+    }
+
+//     db.game.aggregate([
+//   {
+//     $match: { gid: 99 }
+//   },
+//   {
+//     $lookup: {
+//       from: "comment",
+//       localField: "gid",
+//       foreignField: "gid",
+//       as: "comments"
+//     }
+//   },
+//   {
+//     $addFields: {
+//       average_rating: { $avg: "$comments.rating" }
+//     }
+//   },
+//   {
+//     $project: {
+//       _id: 0,
+//       average_rating: 1
+//     }
+//   }
+// ])
+
+    private Float getAverageRating(int gid){
+        System.out.println("in getAverageRating");
+        MatchOperation match = Aggregation.match(Criteria.where("gid").is(gid));
+        LookupOperation lookupComment = Aggregation.lookup("comment", "gid", "gid", "comments");
+        AddFieldsOperation addAverage = Aggregation
+                                        .addFields()
+                                        .addFieldWithValue("average_rating", new Document("$avg", "$comments.rating"))
+                                        .build();
+        ProjectionOperation project = Aggregation.project().and("average_rating").as("average_rating");
+        Aggregation pipeline = Aggregation.newAggregation(match, lookupComment, addAverage, project);
+        Document result = mongoTemplate.aggregate(pipeline, "game", Document.class).getUniqueMappedResult();
+        float avgRating = ((Double) result.get("average_rating")).floatValue();
+        System.out.println("Average rating is " + avgRating);
+
+        return avgRating;
+    }
+
+    // db.comment.find({gid:999}, {_id: 0, c_id: 1})
+    public List<String> getAllCommentIdsForGid(int gid) {
+        MatchOperation match = Aggregation.match(Criteria.where("gid").is(gid));
+        ProjectionOperation project = Aggregation.project().and("c_id").as("c_id");
+        Aggregation pipeline = Aggregation.newAggregation(match, project);
+        AggregationResults<Document> results = mongoTemplate.aggregate(pipeline, "comment", Document.class);
+        List<Document> commentDocuments = results.getMappedResults();
+        List<String> commentIds = new ArrayList<>();
+        for (Document commentDocument : commentDocuments) {
+            String commentId = commentDocument.getString("c_id");
+            // System.out.println("commentId is "+ commentId);
+            commentIds.add(commentId);
+        }
+        return commentIds;
+    }
+    
+
     
 
 
@@ -405,6 +546,10 @@ public class GameRepository {
         JsonObject gamesObject = gamesObjectBuilder.build();
         return gamesObject;
     }
+
+
+
+
 
     
 
