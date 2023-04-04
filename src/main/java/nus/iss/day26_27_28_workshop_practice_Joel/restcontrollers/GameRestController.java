@@ -1,4 +1,4 @@
-package nus.iss.day26_27_workshop_practice_Joel.restcontrollers;
+package nus.iss.day26_27_28_workshop_practice_Joel.restcontrollers;
 
 import java.util.UUID;
 
@@ -17,9 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.json.JsonObject;
-import nus.iss.day26_27_workshop_practice_Joel.models.Comment;
-import nus.iss.day26_27_workshop_practice_Joel.models.UpdateReview;
-import nus.iss.day26_27_workshop_practice_Joel.services.GameService;
+import nus.iss.day26_27_28_workshop_practice_Joel.models.Comment;
+import nus.iss.day26_27_28_workshop_practice_Joel.models.UpdateReview;
+import nus.iss.day26_27_28_workshop_practice_Joel.services.GameService;
 
 @RestController
 @RequestMapping("/games")

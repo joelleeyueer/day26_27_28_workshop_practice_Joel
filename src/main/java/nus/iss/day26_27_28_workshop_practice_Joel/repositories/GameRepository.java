@@ -1,4 +1,4 @@
-package nus.iss.day26_27_workshop_practice_Joel.repositories;
+package nus.iss.day26_27_28_workshop_practice_Joel.repositories;
 
 
 import java.io.StringReader;
@@ -22,9 +22,9 @@ import jakarta.json.JsonArray;
 import jakarta.json.JsonArrayBuilder;
 import jakarta.json.JsonObject;
 import jakarta.json.JsonObjectBuilder;
-import nus.iss.day26_27_workshop_practice_Joel.models.Comment;
-import nus.iss.day26_27_workshop_practice_Joel.models.Game;
-import nus.iss.day26_27_workshop_practice_Joel.models.UpdateReview;
+import nus.iss.day26_27_28_workshop_practice_Joel.models.Comment;
+import nus.iss.day26_27_28_workshop_practice_Joel.models.Game;
+import nus.iss.day26_27_28_workshop_practice_Joel.models.UpdateReview;
 
 @Repository
 public class GameRepository {

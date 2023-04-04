@@ -1,12 +1,12 @@
-package nus.iss.day26_27_workshop_practice_Joel.services;
+package nus.iss.day26_27_28_workshop_practice_Joel.services;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.json.JsonObject;
-import nus.iss.day26_27_workshop_practice_Joel.models.Comment;
-import nus.iss.day26_27_workshop_practice_Joel.models.UpdateReview;
-import nus.iss.day26_27_workshop_practice_Joel.repositories.GameRepository;
+import nus.iss.day26_27_28_workshop_practice_Joel.models.Comment;
+import nus.iss.day26_27_28_workshop_practice_Joel.models.UpdateReview;
+import nus.iss.day26_27_28_workshop_practice_Joel.repositories.GameRepository;
 
 @Service
 public class GameService {
