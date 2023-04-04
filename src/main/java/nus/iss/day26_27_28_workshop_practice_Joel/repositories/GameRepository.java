@@ -427,8 +427,23 @@ public class GameRepository {
     //   ]);
     public JsonObject getGameWithAllReviews(int gid){
 
-        Float incomingAverage = getAverageRating(gid);
-        List<String> commentIds = getAllCommentIdsForGid(gid);
+        Float incomingAverage = null;
+
+        try {
+            incomingAverage = getAverageRating(gid);
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
+
+        List<String> commentIds = null;
+
+        try {
+            commentIds = getAllCommentIdsForGid(gid);
+        } catch (Exception e) {
+            System.out.println(e);
+            return null;
+        }
         //turn commentIds into JsonArray
         JsonArrayBuilder commentIdsArrayBuilder = Json.createArrayBuilder();
         for (String currentCid : commentIds) {
@@ -437,9 +452,17 @@ public class GameRepository {
         }
 
         JsonArray commentIdsArray = commentIdsArrayBuilder.build();
+        JsonObject gameDetail = null;
+        try {
+             gameDetail = getOneGameDetail(gid);
+            System.out.println(gameDetail.toString());
+        } catch (Exception e) {
+            System.out.println(e);
+        }
 
-        JsonObject gameDetail = getOneGameDetail(gid);
-        System.out.println(gameDetail.toString());
+        if (gameDetail == null) {
+            return null;
+        }
 
 
         JsonObject averageRating = Json.createObjectBuilder()

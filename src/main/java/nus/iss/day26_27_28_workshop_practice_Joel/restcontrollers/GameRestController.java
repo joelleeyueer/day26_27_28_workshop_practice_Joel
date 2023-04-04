@@ -148,9 +148,11 @@ public class GameRestController {
             JsonObject incomingUpdateReview = gameService.getGameWithAllReviews(gid);
     
             if (incomingUpdateReview == null){
-                return ResponseEntity.notFound().build();
+                return ResponseEntity
+                        .notFound()
+                        .build();
             }
-    
+        
             return ResponseEntity.ok(incomingUpdateReview.toString());
     }
 
