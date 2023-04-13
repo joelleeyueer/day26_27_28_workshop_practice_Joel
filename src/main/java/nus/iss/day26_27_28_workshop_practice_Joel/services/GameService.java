@@ -1,5 +1,7 @@
 package nus.iss.day26_27_28_workshop_practice_Joel.services;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -52,6 +54,14 @@ public class GameService {
 
     public JsonObject getAllGamesHighestLowestRating(String rating, int limit, int offset){
         return gameRepository.getAllGamesHighestLowestRating(rating, limit, offset);
+    }
+
+    public JsonObject testing(int gid){
+        return gameRepository.getHighestReviewByGidAshi(gid);
+    }
+
+    public List<String> testing2(){
+        return gameRepository.getAllGidsAshi();
     }
 
     

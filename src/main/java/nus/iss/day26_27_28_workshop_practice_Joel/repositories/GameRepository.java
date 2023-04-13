@@ -4,6 +4,7 @@ package nus.iss.day26_27_28_workshop_practice_Joel.repositories;
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.bson.Document;
@@ -43,7 +44,6 @@ public class GameRepository {
     private MongoTemplate mongoTemplate;
 
 //    db.game.find({}, { gid: 1, name: 1}).limit(20).skip(0).sort({ gid: 1 })
-
     public JsonObject getGamesByName(int limit, int offset){
 
             Criteria criteria = Criteria.where("gid").exists(true);
@@ -95,6 +95,10 @@ public class GameRepository {
     //     "c_text" : "A detailed tactical game on air and air to ground combat missions in the The Vietnam War/Second Indochina War.  Worth a look if the topic interests you.  The 2nd edition bookcase version is a cleaned up and better version.",
     //     "gid" : NumberInt(6228)
     // }
+    // db.comment.insertOne({
+    //     "name""
+    // })
+    //
     public JsonObject insertComment(Comment incomingComment){
         // Criteria criteria = Criteria.where("gid").is(incomingComment.getGid());
         // Query query = Query.query(criteria);
@@ -123,6 +127,7 @@ public class GameRepository {
         .append("ID", incomingComment.getGid())
         .append("posted", LocalDateTime.now().toLocalDate().toString())
         .append("name", theGame);
+
 
         Document commentDocForMongo = new Document()
         .append("c_id", incomingComment.getCId())
@@ -428,6 +433,7 @@ public class GameRepository {
     //       }
     //     }
     //   ]);
+    //day 28 task 1
     public JsonObject getGameWithAllReviews(int gid){
 
         Float incomingAverage = null;
@@ -510,7 +516,7 @@ public class GameRepository {
 //     }
 //   }
 // ])
-
+    //day 28 task 1
     private Float getAverageRating(int gid){
         System.out.println("in getAverageRating");
         MatchOperation match = Aggregation.match(Criteria.where("gid").is(gid));
@@ -528,6 +534,7 @@ public class GameRepository {
         return avgRating;
     }
 
+    //day 28 task 1
     // db.comment.find({gid:999}, {_id: 0, c_id: 1})
     public List<String> getAllCommentIdsForGid(int gid) {
         MatchOperation match = Aggregation.match(Criteria.where("gid").is(gid));
@@ -544,6 +551,8 @@ public class GameRepository {
         return commentIds;
     }
 
+
+//day 28 task 2
     public JsonObject getAllGamesHighestLowestRating(String rating, int limit, int offset){
         if (rating.equalsIgnoreCase("highest")) {
             return getGamesByHighestRating(limit, offset);
@@ -555,7 +564,7 @@ public class GameRepository {
 
         // JsonObject gamesList = getGamesByName(limit, offset);
     }
-
+//day 28 task 2
     private JsonObject getGamesByLowestRating(int limit, int offset) {
         //get the fullgame list
         //for each game, call getHighestRating
@@ -590,7 +599,7 @@ public class GameRepository {
         .build();
         return gamesListWithHighestRating;
     }
-
+//day 28 task 2
     private JsonObject getGamesByHighestRating(int limit, int offset) {
         //get the fullgame list
         //for each game, call getHighestRating
@@ -636,6 +645,7 @@ public class GameRepository {
     //     } },
     //     { $project: { _id: 0, gid: "$_id.gid", user: "$_id.user", comment: "$_id.comment", c_id: "$_id.c_id", highestRating: 1 } }
     //   ])
+    //day 28 task 2
     private Document getHighestOrLowestRating(int gid, Boolean isHighest) {
         
         MatchOperation match = Aggregation.match(Criteria.where("gid").is(gid));
@@ -667,7 +677,53 @@ public class GameRepository {
     }
     
     
+    public JsonObject getHighestReviewByGidAshi(Integer gid){
+        Criteria criteria = Criteria.where("gid").is(gid);
+        Query query = new Query(criteria);
+        List<Document> reviews = mongoTemplate.find(query, Document.class, "comment");
+        Integer highestRating = 0;
+        Document highestReview = null;
+        for(Document review:reviews){
+            if(review.getInteger("rating") > highestRating){
+                highestRating = review.getInteger("rating");
+                highestReview = review;
+            }
+        }
 
+        Document game = findGamebyGidAshi(gid);
+
+        JsonObjectBuilder builder = Json.createObjectBuilder();
+        JsonObject highest = builder
+                             .add("_id", gid)
+                             .add("name", game.getString("name"))
+                             .add("rating", highestReview.get("rating").toString())
+                             .add("user", highestReview.getString("user"))
+                             .add("comment", highestReview.getString("c_text"))
+                             .add("review_id", highestReview.get("_id").toString())
+                             .build();
+        
+        return highest;
+    }
+
+    public Document findGamebyGidAshi(Integer gid){
+        Criteria criteria = Criteria.where("gid").is(gid);
+        Query query = new Query(criteria);
+        Document game = mongoTemplate.findOne(query, Document.class, "game");
+        return game;
+    }
+
+    public List<String> getAllGidsAshi(){
+        Criteria criteria = new Criteria();
+        Query query = new Query(criteria);
+        query.fields().include("gid").exclude("_id");
+        List<Document> gidDocs = mongoTemplate.find(query, Document.class , "game");
+        List<String> gids = new LinkedList<>();
+        for(Document gidDoc: gidDocs){
+            gids.add(gidDoc.get("gid").toString());
+            System.out.println("Incoming gid "+ gidDoc.get("gid").toString());
+        }
+        return gids;
+    }
     
 
 
@@ -695,6 +751,8 @@ public class GameRepository {
         JsonObject gamesObject = gamesObjectBuilder.build();
         return gamesObject;
     }
+
+    
 
 
 

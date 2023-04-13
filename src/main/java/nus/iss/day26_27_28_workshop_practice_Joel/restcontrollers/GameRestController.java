@@ -1,5 +1,6 @@
 package nus.iss.day26_27_28_workshop_practice_Joel.restcontrollers;
 
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -172,6 +173,20 @@ public class GameRestController {
     @GetMapping(path="/lowest" , produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<String> getLowest(@RequestParam(defaultValue = "20") int limit, @RequestParam(defaultValue = "0") int offset){
             JsonObject incomingObject = gameService.getAllGamesHighestLowestRating("lowest", limit, offset);
+    
+            if (incomingObject == null){
+                return ResponseEntity
+                        .notFound()
+                        .build();
+            }
+        
+            return ResponseEntity.ok(incomingObject.toString());
+    }
+
+    @GetMapping(path="/testing/{id}" , produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<String> getTesting(@PathVariable int id){
+            // JsonObject incomingObject = gameService.testing(id);
+            List<String> incomingObject = gameService.testing2();
     
             if (incomingObject == null){
                 return ResponseEntity
